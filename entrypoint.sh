@@ -1,60 +1,87 @@
 #!/bin/sh
 set -e
 
-echo "🚀 Starting Zephyrox VPN (Railway)..."
+HOSTNAME=${HOSTNAME:-"zephyrox-vpn-free-production.up.railway.app"}
+UUID="12345678-1234-5678-9abc-def012345678"
 
-# Сертификаты SSL
-if [ ! -f "/etc/letsencrypt/live/zephyrox-vpn/cert.pem" ]; then
-    echo "📄 Generating SSL certificates..."
-    mkdir -p /etc/letsencrypt/live/zephyrox-vpn
+echo "🚀 Zephyrox VPN starting on ${HOSTNAME}..."
+
+# SSL сертификаты
+if [ ! -f "/etc/letsencrypt/live/vpn/cert.pem" ]; then
+    echo "📄 Generating SSL..."
+    mkdir -p /etc/letsencrypt/live/vpn
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout /etc/letsencrypt/live/zephyrox-vpn/privkey.pem \
-        -out /etc/letsencrypt/live/zephyrox-vpn/cert.pem \
-        -subj "/CN=*.railway.app"
+        -keyout /etc/letsencrypt/live/vpn/privkey.pem \
+        -out /etc/letsencrypt/live/vpn/cert.pem \
+        -subj "/CN=${HOSTNAME}"
 fi
 
-# Переменные окружения
-export SERVICE_DISPLAY_NAME="Zephyrox VPN"
-export HOSTNAME=${HOSTNAME:-$(hostname)}
+# Генерация реальных конфигов
+cat > /etc/proxy/config/xray.json <<EOF
+{
+  "inbounds": [{
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+      "clients": [{"id": "${UUID}"}],
+      "decryption": "none"
+    },
+    "streamSettings": {
+      "network": "ws",
+      "wsSettings": {"path": "/vless"},
+      "security": "reality",
+      "realitySettings": {
+        "show": false,
+        "dest": "www.google.com:443",
+        "xver": 0,
+        "serverNames": ["${HOSTNAME}", "www.google.com"]
+      }
+    }
+  }],
+  "outbounds": [{"protocol": "freedom"}]
+}
+EOF
 
-echo "⚙️ Generating configs..."
-node /scripts/generate-config.js
+cat > /etc/proxy/config/hysteria2.yaml <<EOF
+listen: :50000
 
-# Supervisor config
-cat > /etc/supervisord.conf << 'EOF'
+acme:
+  domains:
+    - ${HOSTNAME}
+  email: admin@${HOSTNAME}
+
+auth:
+  type: password
+  password: ${UUID}
+
+masquerade:
+  type: proxy
+  proxy:
+    url: https://www.google.com
+    rewriteHost: true
+EOF
+
+# Запуск subscription сервера
+echo "🌐 Starting subscription API..."
+node /scripts/subscription.js &
+
+# Supervisor
+cat > /etc/supervisord.conf <<EOF
 [supervisord]
 nodaemon=true
-user=root
 logfile=/var/log/supervisord.log
-pidfile=/var/run/supervisord.pid
 
 [program:xray]
 command=/usr/local/bin/xray run -c /etc/proxy/config/xray.json
-directory=/etc/proxy
-user=root
 autostart=true
 autorestart=true
-redirect_stderr=true
 stdout_logfile=/var/log/xray.log
 
 [program:hysteria2]
-command=/usr/local/bin/hysteria server -c /etc/proxy/config/hysteria2.yaml
-directory=/etc/proxy
-user=root
+command=/usr/local/bin/hysteria server -c /etc/proxy/config/hysteria2.yaml  
 autostart=true
 autorestart=true
-redirect_stderr=true
 stdout_logfile=/var/log/hysteria2.log
-
-[program:healthcheck]
-command=node /scripts/health-check.js
-directory=/scripts
-user=root
-autostart=true
-autorestart=true
-startsecs=5
-redirect_stderr=true
-stdout_logfile=/var/log/healthcheck.log
 EOF
 
 echo "✅ Starting services..."
