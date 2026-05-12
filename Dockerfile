@@ -1,37 +1,38 @@
 FROM alpine:latest
 
-# Установка необходимых пакетов
+# Установка пакетов + unzip для Xray
 RUN apk add --no-cache \
     curl \
     wget \
     nodejs \
     npm \
     supervisor \
-    openssl
+    openssl \
+    unzip \
+    && mkdir -p /etc/supervisor/conf.d \
+    && mkdir -p /etc/proxy/config /etc/proxy/blocklists /etc/proxy/local-domains /var/log /etc/letsencrypt
 
-# Установка Xray
+# Xray-core
 RUN wget -O /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip \
     && unzip /tmp/xray.zip -d /usr/local/bin/ \
-    && chmod +x /usr/local/bin/xray
+    && chmod +x /usr/local/bin/xray \
+    && rm /tmp/xray.zip
 
-# Установка Hysteria2
-RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64 \
+# Hysteria2
+RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria_linux_amd64 \
     && chmod +x /usr/local/bin/hysteria
-
-# Создание директорий
-RUN mkdir -p /etc/proxy/config /etc/proxy/blocklists /etc/proxy/local-domains /var/log /etc/letsencrypt
 
 # Копирование файлов
 COPY entrypoint.sh /entrypoint.sh
 COPY config/ /etc/proxy/config/
 COPY scripts/ /scripts/
 
-# Установка прав
-RUN chmod +x /entrypoint.sh
-RUN chmod +x /scripts/*.js
+# Права доступа
+RUN chmod +x /entrypoint.sh /scripts/*.js \
+    && chmod -R 755 /etc/proxy /scripts
 
-# Открытие портов
-EXPOSE 443/tcp 80/tcp 50000/udp
+# Порты
+EXPOSE 80 443 50000/udp
 
-# Команда запуска
-CMD ["/entrypoint.sh"]
+# ✅ КЛЮЧЕВОЙ ФИКС
+ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]
