@@ -1,4 +1,8 @@
 #!/bin/sh
+# Auto-fix CRLF line endings
+sed -i 's/\r$//' "$0" && exec "$0" "$@"
+
+set -e
 
 HOSTNAME=${HOSTNAME:-"zephyrox-vpn-free-production.up.railway.app"}
 UUID="1968654d-0cf6-4c17-b6c5-40e19b06ee60"
@@ -16,13 +20,13 @@ if [ ! -f "/etc/letsencrypt/live/vpn/cert.pem" ]; then
 fi
 
 # Генерация реальных конфигов
-cat > /etc/proxy/config/xray.json <<EOF
+cat > /etc/proxy/config/xray.json <<'XRAY_EOF'
 {
   "inbounds": [{
     "port": 443,
     "protocol": "vless",
     "settings": {
-      "clients": [{"id": "${UUID}"}],
+      "clients": [{"id": "'"${UUID}"'"}],
       "decryption": "none"
     },
     "streamSettings": {
@@ -33,15 +37,15 @@ cat > /etc/proxy/config/xray.json <<EOF
         "show": false,
         "dest": "www.google.com:443",
         "xver": 0,
-        "serverNames": ["${HOSTNAME}", "www.google.com"]
+        "serverNames": ["'"${HOSTNAME}"'", "www.google.com"]
       }
     }
   }],
   "outbounds": [{"protocol": "freedom"}]
 }
-EOF
+XRAY_EOF
 
-cat > /etc/proxy/config/hysteria2.yaml <<EOF
+cat > /etc/proxy/config/hysteria2.yaml <<'HYSTERIA_EOF'
 listen: :50000
 
 acme:
@@ -58,14 +62,10 @@ masquerade:
   proxy:
     url: https://www.google.com
     rewriteHost: true
-EOF
+HYSTERIA_EOF
 
-# Запуск subscription сервера
-echo "🌐 Starting subscription API..."
-node /scripts/subscription.js &
-
-# Supervisor
-cat > /etc/supervisord.conf <<EOF
+# Supervisor config
+cat > /etc/supervisord.conf <<'SUPERVISOR_EOF'
 [supervisord]
 nodaemon=true
 logfile=/var/log/supervisord.log
@@ -81,7 +81,11 @@ command=/usr/local/bin/hysteria server -c /etc/proxy/config/hysteria2.yaml
 autostart=true
 autorestart=true
 stdout_logfile=/var/log/hysteria2.log
-EOF
+SUPERVISOR_EOF
+
+# Запуск subscription сервера
+echo "🌐 Starting subscription API..."
+node /scripts/subscription.js &
 
 echo "✅ Starting services..."
 exec /usr/bin/supervisord -c /etc/supervisord.conf
