@@ -1,32 +1,31 @@
 #!/bin/sh
-# Auto-fix CRLF line endings
-sed -i 's/\r$//' "$0" && exec "$0" "$@"
-
 set -e
 
 HOSTNAME=${HOSTNAME:-"zephyrox-vpn-free-production.up.railway.app"}
 UUID="1968654d-0cf6-4c17-b6c5-40e19b06ee60"
 
-echo "🚀 Zephyrox VPN starting on ${HOSTNAME}..."
+echo "🚀 Zephyrox VPN v2.0 starting..."
 
-# SSL сертификаты
+# Создаём директории
+mkdir -p /etc/proxy/config /etc/letsencrypt/live/vpn /var/log
+
+# SSL (упрощённо)
 if [ ! -f "/etc/letsencrypt/live/vpn/cert.pem" ]; then
-    echo "📄 Generating SSL..."
-    mkdir -p /etc/letsencrypt/live/vpn
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout /etc/letsencrypt/live/vpn/privkey.pem \
         -out /etc/letsencrypt/live/vpn/cert.pem \
         -subj "/CN=${HOSTNAME}"
 fi
 
-# Генерация реальных конфигов
-cat > /etc/proxy/config/xray.json <<'XRAY_EOF'
+# XRAY config (МИНИМАЛЬНЫЙ)
+cat > /etc/proxy/config/xray.json <<'EOF'
 {
+  "log": {"loglevel": "warning"},
   "inbounds": [{
     "port": 443,
     "protocol": "vless",
     "settings": {
-      "clients": [{"id": "'"${UUID}"'"}],
+      "clients": [{"id": "1968654d-0cf6-4c17-b6c5-40e19b06ee60"}],
       "decryption": "none"
     },
     "streamSettings": {
@@ -34,58 +33,36 @@ cat > /etc/proxy/config/xray.json <<'XRAY_EOF'
       "wsSettings": {"path": "/vless"},
       "security": "reality",
       "realitySettings": {
-        "show": false,
         "dest": "www.google.com:443",
-        "xver": 0,
-        "serverNames": ["'"${HOSTNAME}"'", "www.google.com"]
+        "serverNames": ["zephyrox-vpn-free-production.up.railway.app", "www.google.com"]
       }
     }
   }],
   "outbounds": [{"protocol": "freedom"}]
 }
-XRAY_EOF
+EOF
 
-cat > /etc/proxy/config/hysteria2.yaml <<'HYSTERIA_EOF'
+# Hysteria2 config
+cat > /etc/proxy/config/hysteria2.yaml <<EOF
 listen: :50000
-
 acme:
-  domains:
-    - ${HOSTNAME}
+  domains: [${HOSTNAME}]
   email: admin@${HOSTNAME}
-
 auth:
   type: password
   password: ${UUID}
-
 masquerade:
   type: proxy
   proxy:
     url: https://www.google.com
     rewriteHost: true
-HYSTERIA_EOF
+EOF
 
-# Supervisor config
-cat > /etc/supervisord.conf <<'SUPERVISOR_EOF'
-[supervisord]
-nodaemon=true
-logfile=/var/log/supervisord.log
+echo "✅ Configs ready. Starting services..."
 
-[program:xray]
-command=/usr/local/bin/xray run -c /etc/proxy/config/xray.json
-autostart=true
-autorestart=true
-stdout_logfile=/var/log/xray.log
+# Запуск в фоне
+/usr/local/bin/xray run -c /etc/proxy/config/xray.json &
+/usr/local/bin/hysteria server -c /etc/proxy/config/hysteria2.yaml &
 
-[program:hysteria2]
-command=/usr/local/bin/hysteria server -c /etc/proxy/config/hysteria2.yaml
-autostart=true
-autorestart=true
-stdout_logfile=/var/log/hysteria2.log
-SUPERVISOR_EOF
-
-# Запуск subscription сервера
-echo "🌐 Starting subscription API..."
-node /scripts/subscription.js &
-
-echo "✅ Starting services..."
-exec /usr/bin/supervisord -c /etc/supervisord.conf
+echo "🎉 VPN ready on 443 (VLESS) + 50000 (Hysteria2)"
+wait
