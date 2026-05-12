@@ -77,7 +77,7 @@ autorestart=true
 stdout_logfile=/var/log/xray.log
 
 [program:hysteria2]
-command=/usr/local/bin/hysteria server -c /etc/proxy/config/hysteria2.yaml  
+command=/usr/local/bin/hysteria server -c /etc/proxy/config/hysteria2.yaml
 autostart=true
 autorestart=true
 stdout_logfile=/var/log/hysteria2.log
