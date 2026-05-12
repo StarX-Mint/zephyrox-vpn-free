@@ -15,7 +15,7 @@ RUN wget -O /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/down
     && chmod +x /usr/local/bin/xray
 
 # Установка Hysteria2
-RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria_linux_amd64 \
+RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64 \
     && chmod +x /usr/local/bin/hysteria
 
 # Создание директорий
