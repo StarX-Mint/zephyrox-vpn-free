@@ -1,8 +1,7 @@
 #!/bin/sh
-set -e
 
 HOSTNAME=${HOSTNAME:-"zephyrox-vpn-free-production.up.railway.app"}
-UUID="12345678-1234-5678-9abc-def012345678"
+UUID="1968654d-0cf6-4c17-b6c5-40e19b06ee60"
 
 echo "🚀 Zephyrox VPN starting on ${HOSTNAME}..."
 
