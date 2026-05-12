@@ -11,7 +11,7 @@
       "settings": {
         "clients": [
           {
-            "id": "$UUID",
+            "id": "1968654d-0cf6-4c17-b6c5-40e19b06ee60",
             "flow": "xtls-rprx-vision",
             "email": "zephyrox-user@service"
           }
@@ -25,8 +25,8 @@
           "show": false,
           "dest": "www.amazon.com:443",
           "serverNames": ["www.amazon.com", "www.microsoft.com", "www.apple.com"],
-          "privateKey": "$PRIVATE_KEY",
-          "shortIds": ["$SHORT_ID"]
+          "privateKey": "K0dt4rWnqZJ3kI4mL5nO6pQ7rS8tU9vW0xY1z2A3B4C5D6E7F8G9H0I1J2K3L4M5N",
+          "shortIds": ["a1b2c3d4e5"]
         }
       }
     }
@@ -42,14 +42,6 @@
     {
       "tag": "block-out",
       "protocol": "blackhole"
-    },
-    {
-      "tag": "local-direct",
-      "protocol": "freedom",
-      "settings": {
-        "redirect": "",
-        "domainStrategy": "UseIP"
-      }
     }
   ],
   "routing": {
@@ -62,86 +54,8 @@
       },
       {
         "type": "field",
-        "outboundTag": "block-out",
-        "domain": [
-          "regexp:^.*\\.ru$",
-          "regexp:^.*\\.su$",
-          "regexp:^.*\\.xn--p1ai$"
-        ]
-      },
-      {
-        "type": "field",
         "outboundTag": "direct-out",
-        "domain": [
-          "geosite:google",
-          "geosite:facebook",
-          "geosite:youtube",
-          "geosite:twitter",
-          "geosite:instagram",
-          "geosite:telegram",
-          "geosite:discord",
-          "geosite:twitch",
-          "geosite:reddit",
-          "geosite:spotify",
-          "geosite:netflix",
-          "geosite:tiktok",
-          "geosite:linkedin",
-          "domain:youtube.com",
-          "domain:youtu.be",
-          "domain:google.com",
-          "domain:facebook.com",
-          "domain:instagram.com",
-          "domain:twitter.com",
-          "domain:telegram.org",
-          "domain:discord.com",
-          "domain:twitch.tv",
-          "domain:reddit.com",
-          "domain:spotify.com",
-          "domain:netflix.com",
-          "domain:tiktok.com",
-          "domain:linkedin.com",
-          "domain:messenger.com",
-          "domain:whatsapp.com",
-          "domain:snapchat.com",
-          "domain:pinterest.com",
-          "domain:dropbox.com",
-          "domain:github.com",
-          "domain:bitbucket.org",
-          "domain:gitlab.com"
-        ]
-      },
-      {
-        "type": "field",
-        "outboundTag": "local-direct",
-        "domain": [
-          "domain:vk.com",
-          "domain:ok.ru",
-          "domain:mail.ru",
-          "domain:yandex.ru",
-          "domain:avito.ru",
-          "domain:ozon.ru",
-          "domain:wildberries.ru",
-          "domain:sberbank.ru",
-          "domain:alfabank.ru",
-          "domain:vtb.ru",
-          "domain:gazprombank.ru",
-          "domain:rosbank.ru",
-          "domain:tinkoff.ru",
-          "domain:raiffeisen.ru"
-        ]
-      },
-      {
-        "type": "field",
-        "outboundTag": "direct-out",
-        "ip": [
-          "geoip:private",
-          "geoip:cn",
-          "geoip:ir",
-          "geoip:kp",
-          "geoip:cu",
-          "geoip:ru"
-        ],
-        "domain": ["geosite:category-gov-ru", "geosite:category-bank-ru"]
+        "ip": ["geoip:private", "geoip:cn", "geoip:ru"]
       }
     ]
   }

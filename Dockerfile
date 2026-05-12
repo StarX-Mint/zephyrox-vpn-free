@@ -7,29 +7,32 @@ RUN apk add --no-cache \
     && mkdir -p /etc/proxy/config /etc/proxy/blocklists /etc/proxy/local-domains \
     && mkdir -p /var/log /etc/letsencrypt /public
 
-# Xray-core (VLESS/VMess)
+# Xray-core
 RUN wget -O /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip \
     && unzip /tmp/xray.zip -d /usr/local/bin/ \
     && chmod +x /usr/local/bin/xray \
     && rm /tmp/xray.zip
 
-# Hysteria2 (UDP)
+# Hysteria2
 RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64 \
     && chmod +x /usr/local/bin/hysteria
 
-# Копирование файлов
+# 🔥 КОПИРОВАНИЕ
 COPY entrypoint.sh /entrypoint.sh
 COPY config/ /etc/proxy/config/
 COPY scripts/ /scripts/
-# для статических файлов
 COPY public/ /public/
 
-# Права
-RUN chmod +x /entrypoint.sh /scripts/*.js \
-    && chmod -R 755 /etc/proxy /scripts
+# 🔥 КРИТИЧНЫЙ ФИКС CRLF + ПРОВА
+RUN sed -i 's/\r$//' /entrypoint.sh \
+    && chmod +x /entrypoint.sh /scripts/*.js \
+    && chmod -R 755 /etc/proxy /scripts \
+    && echo "=== ENTRYPOINT CHECK ===" \
+    && ls -la /entrypoint.sh \
+    && file /entrypoint.sh \
+    && head -5 /entrypoint.sh
 
 # Порты
 EXPOSE 80 443 50000/udp
 
-# Запуск
 ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]
