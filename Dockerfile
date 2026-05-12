@@ -21,7 +21,8 @@ RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases
 COPY entrypoint.sh /entrypoint.sh
 COPY config/ /etc/proxy/config/
 COPY scripts/ /scripts/
-COPY public/ /public/  # для статических файлов
+# для статических файлов
+COPY public/ /public/
 
 # Права
 RUN chmod +x /entrypoint.sh /scripts/*.js \
