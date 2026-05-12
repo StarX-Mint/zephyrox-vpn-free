@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  zephyrox-proxy:
+    build: .
+    ports:
+      - "443:443"
+      - "80:80"
+      - "50000:50000/udp"
+    environment:
+      - UUID=${USER_UUID}
+      - PANEL_PASSWORD=${PANEL_PASS}
+      - SERVICE_NAME=ZephyroxVPN
+    restart: unless-stopped
