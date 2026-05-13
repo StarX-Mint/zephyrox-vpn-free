@@ -20,8 +20,8 @@ RUN wget -O /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/down
     && unzip /tmp/xray.zip -d /usr/local/bin/ \
     && chmod +x /usr/local/bin/xray
 
-# Install Hysteria2
-RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria_linux_amd64 \
+# Install Hysteria2 (исправленный URL с дефисами вместо подчеркиваний)
+RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64 \
     && chmod +x /usr/local/bin/hysteria
 
 # Install GeoIP databases
