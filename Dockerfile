@@ -8,7 +8,6 @@ RUN apk add --no-cache \
     npm \
     supervisor \
     openssl \
-    iptables \
     ca-certificates \
     tzdata
 
@@ -20,23 +19,22 @@ RUN wget -O /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/down
     && unzip /tmp/xray.zip -d /usr/local/bin/ \
     && chmod +x /usr/local/bin/xray
 
-# Install Hysteria2 (исправленный URL с дефисами вместо подчеркиваний)
+# Install Hysteria2 (исправленный URL)
 RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64 \
     && chmod +x /usr/local/bin/hysteria
-
-# Install GeoIP databases
-RUN wget -O /app/geoip.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat \
-    && wget -O /app/geosite.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
 
 # Copy application files
 COPY scripts/ /app/scripts/
 COPY config/ /app/config/
 COPY entrypoint.sh /app/entrypoint.sh
 
-# Set permissions
+# Set permissions correctly
 RUN chmod +x /app/entrypoint.sh \
     && chmod +x /app/scripts/*.js \
     && chown -R root:root /app
+
+# Ensure proper line endings
+RUN sed -i 's/\r$//' /app/entrypoint.sh
 
 WORKDIR /app
 

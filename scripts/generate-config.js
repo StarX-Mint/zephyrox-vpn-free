@@ -1,7 +1,6 @@
 const fs = require('fs');
-const path = require('path');
 
-console.log("🔧 Generating Zephyrox Multiverse configurations...");
+console.log("🔧 Generating Zephyrox configurations...");
 
 const env = {
     USER_UUID: process.env.USER_UUID || '1968654d-0cf6-4c17-b6c5-40e19b06ee60',
@@ -17,19 +16,9 @@ try {
     config = config.replace(/\$XRAY_PRIVATE_KEY/g, env.XRAY_PRIVATE_KEY);
     config = config.replace(/\$SHORT_ID/g, env.SHORT_ID);
     fs.writeFileSync('/app/config/xray-main.json', config);
-    console.log("✅ Xray main config generated");
+    console.log("✅ Xray config generated");
 } catch (err) {
-    console.error("❌ Failed to generate Xray main config:", err.message);
-}
-
-// Generate backup Xray config
-try {
-    let config = fs.readFileSync('/app/config/xray-backup.json', 'utf8');
-    config = config.replace(/\$USER_UUID/g, env.USER_UUID);
-    fs.writeFileSync('/app/config/xray-backup.json', config);
-    console.log("✅ Xray backup config generated");
-} catch (err) {
-    console.error("❌ Failed to generate Xray backup config:", err.message);
+    console.error("❌ Failed to generate Xray config:", err.message);
 }
 
 // Generate Hysteria config

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 echo "🚀 Initializing Zephyrox Multiverse VPN..."
@@ -20,11 +20,13 @@ fi
 echo "⚙️ Generating multi-protocol configurations..."
 node /app/scripts/generate-configs.js
 
-# Setup network rules
-echo "🛡️ Setting up network security..."
-iptables -I INPUT -p tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
-iptables -I INPUT -p tcp --tcp-flags FIN,SYN FIN,SYN -j DROP
-iptables -I INPUT -p tcp --tcp-flags SYN,RST SYN,RST -j DROP
+# Setup network rules if iptables available
+if command -v iptables >/dev/null 2>&1; then
+    echo "🛡️ Setting up network security..."
+    iptables -I INPUT -p tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP 2>/dev/null || true
+    iptables -I INPUT -p tcp --tcp-flags FIN,SYN FIN,SYN -j DROP 2>/dev/null || true
+    iptables -I INPUT -p tcp --tcp-flags SYN,RST SYN,RST -j DROP 2>/dev/null || true
+fi
 
 # Create supervisord configuration
 cat > /etc/supervisord.conf <<EOF
@@ -43,15 +45,6 @@ autorestart=true
 redirect_stderr=true
 stdout_logfile=/var/log/xray-main.log
 
-[program:xray-backup]
-command=/usr/local/bin/xray run -c /app/config/xray-backup.json
-directory=/app
-user=root
-autostart=true
-autorestart=true
-redirect_stderr=true
-stdout_logfile=/var/log/xray-backup.log
-
 [program:hysteria2]
 command=/usr/local/bin/hysteria server -c /app/config/hysteria2.yaml
 directory=/app
@@ -69,15 +62,6 @@ autostart=true
 autorestart=true
 redirect_stderr=true
 stdout_logfile=/var/log/subscription-api.log
-
-[program:health-monitor]
-command=node /app/scripts/health-monitor.js
-directory=/app
-user=root
-autostart=true
-autorestart=true
-redirect_stderr=true
-stdout_logfile=/var/log/health-monitor.log
 EOF
 
 echo "🎯 Launching Zephyrox Multiverse VPN services..."
