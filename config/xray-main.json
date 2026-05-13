@@ -55,31 +55,6 @@
           "path": "/vmess-ws"
         }
       }
-    },
-    {
-      "tag": "trojan-tls",
-      "port": 2083,
-      "protocol": "trojan",
-      "settings": {
-        "clients": [
-          {
-            "password": "$USER_UUID",
-            "email": "trojan-tls@zephyrox"
-          }
-        ]
-      },
-      "streamSettings": {
-        "network": "tcp",
-        "security": "tls",
-        "tlsSettings": {
-          "certificates": [
-            {
-              "certificateFile": "/etc/ssl/private/cert.pem",
-              "keyFile": "/etc/ssl/private/privkey.pem"
-            }
-          ]
-        }
-      }
     }
   ],
   "outbounds": [
@@ -94,38 +69,6 @@
       "tag": "blocked",
       "protocol": "blackhole",
       "settings": {}
-    },
-    {
-      "tag": "local-direct",
-      "protocol": "freedom",
-      "settings": {
-        "redirect": "",
-        "domainStrategy": "UseIP"
-      }
     }
-  ],
-  "routing": {
-    "domainStrategy": "AsIs",
-    "rules": [
-      {
-        "type": "field",
-        "outboundTag": "blocked",
-        "domain": ["geosite:category-ads-all"]
-      },
-      {
-        "type": "field",
-        "outboundTag": "local-direct",
-        "domain": [
-          "domain:vk.com",
-          "domain:ok.ru",
-          "domain:mail.ru",
-          "domain:yandex.ru",
-          "domain:avito.ru",
-          "domain:ozon.ru",
-          "domain:wildberries.ru",
-          "domain:sberbank.ru"
-        ]
-      }
-    ]
-  }
+  ]
 }

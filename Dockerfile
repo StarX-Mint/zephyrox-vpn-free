@@ -19,11 +19,11 @@ RUN wget -O /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/down
     && unzip /tmp/xray.zip -d /usr/local/bin/ \
     && chmod +x /usr/local/bin/xray
 
-# Install Hysteria2 (исправленный URL)
+# Install Hysteria2 (исправленный URL с дефисами)
 RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64 \
     && chmod +x /usr/local/bin/hysteria
 
-# Copy application files
+# Copy all application files
 COPY scripts/ /app/scripts/
 COPY config/ /app/config/
 COPY entrypoint.sh /app/entrypoint.sh
@@ -33,7 +33,7 @@ RUN chmod +x /app/entrypoint.sh \
     && chmod +x /app/scripts/*.js \
     && chown -R root:root /app
 
-# Ensure proper line endings
+# Ensure proper line endings (fix CRLF issues)
 RUN sed -i 's/\r$//' /app/entrypoint.sh
 
 WORKDIR /app

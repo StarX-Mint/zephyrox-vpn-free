@@ -11,14 +11,3 @@ masquerade:
     url: https://www.bing.com
     rewriteHost: true
 ignoreClientIP: true
-bandwidth:
-  up: 1 gbps
-  down: 1 gbps
-quic:
-  initStreamReceiveWindow: 8388608
-  maxStreamReceiveWindow: 8388608
-  initConnectionReceiveWindow: 20971520
-  maxConnectionReceiveWindow: 20971520
-  maxIdleTimeout: 30s
-  maxIncomingStreams: 1024
-  disablePathMTUDiscovery: false

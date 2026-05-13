@@ -11,24 +11,32 @@ const env = {
 
 // Generate main Xray config
 try {
-    let config = fs.readFileSync('/app/config/xray-main.json', 'utf8');
-    config = config.replace(/\$USER_UUID/g, env.USER_UUID);
-    config = config.replace(/\$XRAY_PRIVATE_KEY/g, env.XRAY_PRIVATE_KEY);
-    config = config.replace(/\$SHORT_ID/g, env.SHORT_ID);
-    fs.writeFileSync('/app/config/xray-main.json', config);
-    console.log("✅ Xray config generated");
+    if (fs.existsSync('/app/config/xray-main.json')) {
+        let config = fs.readFileSync('/app/config/xray-main.json', 'utf8');
+        config = config.replace(/\$USER_UUID/g, env.USER_UUID);
+        config = config.replace(/\$XRAY_PRIVATE_KEY/g, env.XRAY_PRIVATE_KEY);
+        config = config.replace(/\$SHORT_ID/g, env.SHORT_ID);
+        fs.writeFileSync('/app/config/xray-main.json', config);
+        console.log("✅ Xray config generated");
+    } else {
+        console.log("⚠️ Xray config file not found, skipping...");
+    }
 } catch (err) {
     console.error("❌ Failed to generate Xray config:", err.message);
 }
 
 // Generate Hysteria config
 try {
-    let config = fs.readFileSync('/app/config/hysteria2.yaml', 'utf8');
-    config = config.replace(/\$HYSTERIA_PASSWORD/g, env.HYSTERIA_PASSWORD);
-    fs.writeFileSync('/app/config/hysteria2.yaml', config);
-    console.log("✅ Hysteria config generated");
+    if (fs.existsSync('/app/config/hysteria2.yaml')) {
+        let config = fs.readFileSync('/app/config/hysteria2.yaml', 'utf8');
+        config = config.replace(/\$HYSTERIA_PASSWORD/g, env.HYSTERIA_PASSWORD);
+        fs.writeFileSync('/app/config/hysteria2.yaml', config);
+        console.log("✅ Hysteria config generated");
+    } else {
+        console.log("⚠️ Hysteria config file not found, skipping...");
+    }
 } catch (err) {
     console.error("❌ Failed to generate Hysteria config:", err.message);
 }
 
-console.log("🎉 All configurations generated successfully");
+console.log("🎉 Configuration generation completed");
