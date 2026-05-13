@@ -1,7 +1,7 @@
 listen: :50000
 tls:
-  cert: $TLS_CERT_PATH
-  key: $TLS_KEY_PATH
+  cert: /etc/ssl/private/cert.pem
+  key: /etc/ssl/private/privkey.pem
 auth:
   type: password
   password: $HYSTERIA_PASSWORD
@@ -10,8 +10,15 @@ masquerade:
   proxy:
     url: https://www.bing.com
     rewriteHost: true
-  listenHTTP: :80
-  listenHTTPS: :443
-trafficStats:
-  listen: :9999
 ignoreClientIP: true
+bandwidth:
+  up: 1 gbps
+  down: 1 gbps
+quic:
+  initStreamReceiveWindow: 8388608
+  maxStreamReceiveWindow: 8388608
+  initConnectionReceiveWindow: 20971520
+  maxConnectionReceiveWindow: 20971520
+  maxIdleTimeout: 30s
+  maxIncomingStreams: 1024
+  disablePathMTUDiscovery: false

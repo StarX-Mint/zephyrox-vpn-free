@@ -1,13 +1,21 @@
 version: '3.8'
 services:
-  zephyrox-proxy:
+  zephyrox-multiverse-vpn:
     build: .
     ports:
       - "443:443"
-      - "80:80"
+      - "80:8080"
       - "50000:50000/udp"
+      - "2083:2083"
+      - "2053:2053"
+      - "8443:8443"
+      - "10000:10000/udp"
     environment:
-      - UUID=${USER_UUID}
-      - PANEL_PASSWORD=${PANEL_PASS}
-      - SERVICE_NAME=ZephyroxVPN
+      - USER_UUID=1968654d-0cf6-4c17-b6c5-40e19b06ee60
+      - XRAY_PRIVATE_KEY=KAs6zgln0PGSNCAgwfvhxR6cwBkXjbaAM2Nqjd640HI
+      - SHORT_ID=6fa175bed0382c49
+      - HYSTERIA_PASSWORD=SolusMC_250020082Proxy
+      - PORT=8080
+      - NODE_ENV=production
+      - HOSTNAME=zephyrox-vpn-free-production.up.railway.app
     restart: unless-stopped

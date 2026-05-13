@@ -1,0 +1,59 @@
+{
+  "log": {
+    "access": "/var/log/xray-backup-access.log",
+    "error": "/var/log/xray-backup-error.log",
+    "loglevel": "warning"
+  },
+  "inbounds": [
+    {
+      "tag": "vless-grpc",
+      "port": 8443,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "$USER_UUID",
+            "email": "vless-grpc@zephyrox"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "grpc",
+        "security": "tls",
+        "tlsSettings": {
+          "certificates": [
+            {
+              "certificateFile": "/etc/ssl/private/cert.pem",
+              "keyFile": "/etc/ssl/private/privkey.pem"
+            }
+          ]
+        },
+        "grpcSettings": {
+          "serviceName": "zephyrox-grpc"
+        }
+      }
+    },
+    {
+      "tag": "shadowsocks",
+      "port": 10000,
+      "protocol": "shadowsocks",
+      "settings": {
+        "clients": [
+          {
+            "method": "aes-256-gcm",
+            "password": "$USER_UUID",
+            "email": "shadowsocks@zephyrox"
+          }
+        ],
+        "network": "tcp,udp"
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "direct",
+      "protocol": "freedom"
+    }
+  ]
+}

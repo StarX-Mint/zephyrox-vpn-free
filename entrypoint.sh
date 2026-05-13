@@ -1,32 +1,84 @@
-#!/bin/sh
+#!/bin/bash
+set -e
 
-echo "🚀 Zephyrox VPN deploying..."
+echo "🚀 Initializing Zephyrox Multiverse VPN..."
 
-HOSTNAME=${HOSTNAME:-"zephyrox-vpn-free-production.up.railway.app"}
-UUID="1968654d-0cf6-4c17-b6c5-40e19b06ee60"
+# Set timezone
+ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
-# Заменяем переменные в конфигах
-sed -i "s|\$UUID|$UUID|g" /etc/proxy/config/xray.json
-sed -i "s|\$HOSTNAME|$HOSTNAME|g" /etc/proxy/config/*.yaml
+# Generate SSL certificates if needed
+if [ ! -f "/etc/ssl/private/cert.pem" ]; then
+    echo "🔐 Generating SSL certificates..."
+    mkdir -p /etc/ssl/private
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /etc/ssl/private/privkey.pem \
+        -out /etc/ssl/private/cert.pem \
+        -subj "/CN=zephyrox-vpn-multiverse/O=Zephyrox VPN/C=US"
+fi
 
-# SSL
-mkdir -p /etc/letsencrypt/live/vpn /var/log
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout /etc/letsencrypt/live/vpn/privkey.pem \
-    -out /etc/letsencrypt/live/vpn/cert.pem \
-    -subj "/CN=$HOSTNAME"
+# Generate configurations
+echo "⚙️ Generating multi-protocol configurations..."
+node /app/scripts/generate-configs.js
 
-# Тест конфигов
-echo "✅ Testing configs..."
-/usr/local/bin/xray run -test -c /etc/proxy/config/xray.json && echo "Xray OK" || echo "Xray FAIL"
+# Setup network rules
+echo "🛡️ Setting up network security..."
+iptables -I INPUT -p tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
+iptables -I INPUT -p tcp --tcp-flags FIN,SYN FIN,SYN -j DROP
+iptables -I INPUT -p tcp --tcp-flags SYN,RST SYN,RST -j DROP
 
-# Subscription
-cd /scripts && node subscription.js &
+# Create supervisord configuration
+cat > /etc/supervisord.conf <<EOF
+[supervisord]
+nodaemon=true
+user=root
+logfile=/var/log/supervisord.log
+pidfile=/var/run/supervisord.pid
 
-# Запуск VPN
-echo "🎉 Starting VPN..."
-/usr/local/bin/xray run -c /etc/proxy/config/xray.json &
-/usr/local/bin/hysteria server -c /etc/proxy/config/hysteria2.yaml &
+[program:xray-main]
+command=/usr/local/bin/xray run -c /app/config/xray-main.json
+directory=/app
+user=root
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/xray-main.log
 
-echo "✅ LIVE! Subscription: https://${HOSTNAME}/sub"
-wait
+[program:xray-backup]
+command=/usr/local/bin/xray run -c /app/config/xray-backup.json
+directory=/app
+user=root
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/xray-backup.log
+
+[program:hysteria2]
+command=/usr/local/bin/hysteria server -c /app/config/hysteria2.yaml
+directory=/app
+user=root
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/hysteria2.log
+
+[program:subscription-api]
+command=node /app/scripts/subscription-api.js
+directory=/app
+user=root
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/subscription-api.log
+
+[program:health-monitor]
+command=node /app/scripts/health-monitor.js
+directory=/app
+user=root
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/health-monitor.log
+EOF
+
+echo "🎯 Launching Zephyrox Multiverse VPN services..."
+exec /usr/bin/supervisord -c /etc/supervisord.conf

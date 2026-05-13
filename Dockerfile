@@ -1,38 +1,48 @@
 FROM alpine:latest
 
-# Установка зависимостей
+# Install system dependencies
 RUN apk add --no-cache \
-    curl wget nodejs npm supervisor openssl unzip \
-    && mkdir -p /etc/supervisor/conf.d \
-    && mkdir -p /etc/proxy/config /etc/proxy/blocklists /etc/proxy/local-domains \
-    && mkdir -p /var/log /etc/letsencrypt /public
+    curl \
+    wget \
+    nodejs \
+    npm \
+    supervisor \
+    openssl \
+    iptables \
+    ca-certificates \
+    tzdata
 
-# Xray-core
+# Create necessary directories
+RUN mkdir -p /app /app/scripts /app/config /var/log/zephyrox /etc/ssl/private
+
+# Install Xray
 RUN wget -O /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip \
     && unzip /tmp/xray.zip -d /usr/local/bin/ \
-    && chmod +x /usr/local/bin/xray \
-    && rm /tmp/xray.zip
+    && chmod +x /usr/local/bin/xray
 
-# Hysteria2
-RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64 \
+# Install Hysteria2
+RUN wget -O /usr/local/bin/hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria_linux_amd64 \
     && chmod +x /usr/local/bin/hysteria
 
-# 🔥 КОПИРОВАНИЕ
-COPY entrypoint.sh /entrypoint.sh
-COPY config/ /etc/proxy/config/
-COPY scripts/ /scripts/
-COPY public/ /public/
+# Install GeoIP databases
+RUN wget -O /app/geoip.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat \
+    && wget -O /app/geosite.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
 
-# 🔥 КРИТИЧНЫЙ ФИКС CRLF + ПРОВА
-RUN sed -i 's/\r$//' /entrypoint.sh \
-    && chmod +x /entrypoint.sh /scripts/*.js \
-    && chmod -R 755 /etc/proxy /scripts \
-    && echo "=== ENTRYPOINT CHECK ===" \
-    && ls -la /entrypoint.sh \
-    && file /entrypoint.sh \
-    && head -5 /entrypoint.sh
+# Copy application files
+COPY scripts/ /app/scripts/
+COPY config/ /app/config/
+COPY entrypoint.sh /app/entrypoint.sh
 
-# Порты
-EXPOSE 80 443 50000/udp
+# Set permissions
+RUN chmod +x /app/entrypoint.sh \
+    && chmod +x /app/scripts/*.js \
+    && chown -R root:root /app
 
-ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]
+WORKDIR /app
+
+EXPOSE 80/tcp 443/tcp 50000/udp 2083/tcp 2053/tcp 8443/tcp 10000/udp
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["/app/entrypoint.sh"]

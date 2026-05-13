@@ -1,26 +1,45 @@
 const fs = require('fs');
-const crypto = require('crypto');
+const path = require('path');
 
-// Generate UUID if not exists
-let uuid = process.env.USER_UUID;
-if (!uuid) {
-    uuid = crypto.randomUUID();
-    console.log(`Generated new UUID: ${uuid}`);
+console.log("🔧 Generating Zephyrox Multiverse configurations...");
+
+const env = {
+    USER_UUID: process.env.USER_UUID || '1968654d-0cf6-4c17-b6c5-40e19b06ee60',
+    XRAY_PRIVATE_KEY: process.env.XRAY_PRIVATE_KEY || 'KAs6zgln0PGSNCAgwfvhxR6cwBkXjbaAM2Nqjd640HI',
+    SHORT_ID: process.env.SHORT_ID || '6fa175bed0382c49',
+    HYSTERIA_PASSWORD: process.env.HYSTERIA_PASSWORD || 'SolusMC_250020082Proxy'
+};
+
+// Generate main Xray config
+try {
+    let config = fs.readFileSync('/app/config/xray-main.json', 'utf8');
+    config = config.replace(/\$USER_UUID/g, env.USER_UUID);
+    config = config.replace(/\$XRAY_PRIVATE_KEY/g, env.XRAY_PRIVATE_KEY);
+    config = config.replace(/\$SHORT_ID/g, env.SHORT_ID);
+    fs.writeFileSync('/app/config/xray-main.json', config);
+    console.log("✅ Xray main config generated");
+} catch (err) {
+    console.error("❌ Failed to generate Xray main config:", err.message);
 }
 
-// Generate XRay config
-let xrayConfig = fs.readFileSync('/etc/proxy/config/xray.json', 'utf8');
-xrayConfig = xrayConfig.replace('$UUID', uuid);
-// In real deployment, replace these with actual values from env vars
-xrayConfig = xrayConfig.replace('$PRIVATE_KEY', process.env.XRAY_PRIVATE_KEY || 'private_key_here');
-xrayConfig = xrayConfig.replace('$SHORT_ID', process.env.SHORT_ID || 'short_id_here');
-fs.writeFileSync('/etc/proxy/config/xray.json', xrayConfig);
+// Generate backup Xray config
+try {
+    let config = fs.readFileSync('/app/config/xray-backup.json', 'utf8');
+    config = config.replace(/\$USER_UUID/g, env.USER_UUID);
+    fs.writeFileSync('/app/config/xray-backup.json', config);
+    console.log("✅ Xray backup config generated");
+} catch (err) {
+    console.error("❌ Failed to generate Xray backup config:", err.message);
+}
 
 // Generate Hysteria config
-let hysteriaConfig = fs.readFileSync('/etc/proxy/config/hysteria2.yaml', 'utf8');
-hysteriaConfig = hysteriaConfig.replace('$HYSTERIA_PASSWORD', process.env.HYSTERIA_PASSWORD || 'default_password');
-hysteriaConfig = hysteriaConfig.replace('$TLS_CERT_PATH', process.env.TLS_CERT_PATH || '/certs/fullchain.pem');
-hysteriaConfig = hysteriaConfig.replace('$TLS_KEY_PATH', process.env.TLS_KEY_PATH || '/certs/privkey.pem');
-fs.writeFileSync('/etc/proxy/config/hysteria2.yaml', hysteriaConfig);
+try {
+    let config = fs.readFileSync('/app/config/hysteria2.yaml', 'utf8');
+    config = config.replace(/\$HYSTERIA_PASSWORD/g, env.HYSTERIA_PASSWORD);
+    fs.writeFileSync('/app/config/hysteria2.yaml', config);
+    console.log("✅ Hysteria config generated");
+} catch (err) {
+    console.error("❌ Failed to generate Hysteria config:", err.message);
+}
 
-console.log("Configs generated successfully");
+console.log("🎉 All configurations generated successfully");
